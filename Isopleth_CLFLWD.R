@@ -133,6 +133,8 @@ temp_heatmap.plot
 ggsave(temp_heatmap.plot, file=".//output//2017 11 21 temp heat maps.pdf",width=6, height=6 )
 
 #facet graphs by year
+# the trick to get multiple years here is to have the free_x other wise the graphs all have
+# the full range of dates on the x axis
 mendota_2012_2013.df <- mendota_interp.df %>%
   filter(year %in% 2012:2013)
 ggplot(mendota_2012_2013.df, aes(x = date, y = depth, z = wtemp, fill = wtemp)) +
@@ -145,3 +147,48 @@ ggplot(mendota_2012_2013.df, aes(x = date, y = depth, z = wtemp, fill = wtemp)) 
   ylab("Depth (m)") +
   xlab("") +
   facet_wrap("year", scale="free_x") 
+
+# improving the faceted plot
+ggplot(mendota_2012_2013.df, aes(x = date, y = depth, z = wtemp, fill = wtemp)) +
+  geom_raster() +
+  scale_y_reverse(expand=c(0,0)) +
+  scale_fill_gradientn(colours=matlab.like(10), na.value = 'gray', name="Water\nTemp \nºC") + 
+  scale_x_date(date_breaks = "3 week",
+               # limits = as_date(c('2016-12-06','2017-02-25')),
+               labels=date_format("%b-%d"), expand=c(0,0)) +
+  ylab("Depth (m)") +
+  xlab("") +
+  facet_wrap("year", scale="free_x") +
+  theme(
+    # LABLES APPEARANCE
+    axis.title.x=element_text(size=14, face="bold"),
+    axis.title.y=element_text(size=14, face="bold"),
+    axis.text.x = element_text(size=12, face="bold", angle=45, hjust=1),
+    axis.text.y = element_text(size=12, face="bold"),
+    # plot.title = element_text(hjust = 0.5, colour="black", size=22, face="bold"),
+    # LEGEND
+    # LEGEND TEXT
+    legend.text = element_text(colour="black", size = 11, face = "bold"),
+    # LEGEND TITLE
+    legend.title = element_text(colour="black", size=11, face="bold"),
+    # LEGEND POSITION AND JUSTIFICATION 
+    # legend.justification=c(0.1,1),
+    legend.position= "right", #c(0.02,.99)
+    # PLOT COLORS
+    # REMOVE BOX BEHIND LEGEND SYMBOLS
+    # REMOVE LEGEND BOX
+    # legend.key = element_rect(fill = "transparent", colour = "transparent"), 
+    # REMOVE LEGEND BOX
+    # legend.background = element_rect(fill = "transparent", colour = "transparent"), 
+    # #REMOVE PLOT FILL AND GRIDS
+    # panel.background=element_rect(fill = "transparent", colour = "transparent"), 
+    # # removes the window background
+    # plot.background=element_rect(fill="transparent",colour=NA),
+    # # removes the grid lines
+    # panel.grid.major = element_blank(), 
+    # panel.grid.minor = element_blank(),
+    # ADD AXES LINES AND SIZE
+    axis.line.x = element_line(color="black", size = 0.3),
+    axis.line.y = element_line(color="black", size = 0.3),
+    # ADD PLOT BOX
+    panel.border = element_rect(colour = "black", fill=NA, size=0.3))
