@@ -5,7 +5,7 @@
 
 
 ## this is a list of packages needed
-packages = c('ggplot2', 'tidyverse', 'scales', 'akima', 'lubridate', 'colorRamps')
+packages = c('ggplot2', 'tidyverse', 'scales', 'akima', 'lubridate', 'colorRamps', 'readxl')
 
 ## this is code to install the packages or load them if already installed
 for(p in packages){
@@ -15,45 +15,45 @@ for(p in packages){
   library(p, character.only = T)
 }
 
-#use readr package to load mendoata data
-mendota.df <- read_csv("./mendota_temp.csv")
+#use readr package to load Little Comfort data
+CLFLWD_df <- read_excel("CLFLWD.df.xlsx")
 
 #clean up bad data and out of range data
-mendota_clean.df <- mendota.df %>% # use this df for rest of commands
-  filter(wtemp>=0) %>% # select data that is greater or equal to 0
-  filter(!is.na(wtemp)) %>% # remove all NA values
-  select(sampledate, depth, wtemp) # this uses only the variables that are needed
+CLFLWD_clean_df <- CLFLWD_df %>% # use this df for rest of commands
+  filter(temp>=0) %>% # select data that is greater or equal to 0
+  filter(!is.na(temp)) %>% # remove all NA values
+  select(date, depth, temp) # this uses only the variables that are needed
 
 # interolated watertemp with depth
-mendota_interp.df <- mendota_clean.df %>% rename(x=sampledate, y=depth, z=wtemp)
+#CLFLWD_clean_df <- CLFLWD_clean_df %>% rename(x=date, y=depth, z=temp)
 
 # just a note here that the x interpretation step of 1 works with day data as it is using the 
 # number of days. The issue comes up when you want to use time. The thing to remember here is 
 # time in R is the number of seconds since 1970-01-01 00:00:00 so if you do hours you would use
 # 3600 seconds rather than 1
-mendota_interp.df <- interp(x = mendota_clean.df$sampledate, 
-                            y = mendota_clean.df$depth,
-                            z = mendota_clean.df$wtemp,
-                            xo = seq(min(mendota_clean.df$sampledate), max(mendota_clean.df$sampledate), by = 1),
-                            yo = seq(min(mendota_clean.df$depth), max(mendota_clean.df$depth), by = 0.2),
+CLFLWD_interp_df <- interp(x = CLFLWD_clean_df$date, 
+                            y = CLFLWD_clean_df$depth,
+                            z = CLFLWD_clean_df$temp,
+                            xo = seq(min(CLFLWD_clean_df$date), max(CLFLWD_clean_df$date), by = 10),
+                            yo = seq(min(CLFLWD_clean_df$depth), max(CLFLWD_clean_df$depth), by = 1),
                             extrap=FALSE,
                             linear=TRUE)
 
 # this converts the interpolated data into a dataframe
-mendota_interp.df <- interp2xyz(mendota_interp.df, data.frame = TRUE)
+CLFLWD_interp_df <- interp2xyz(CLFLWD_interp_df, data.frame = TRUE)
 
 # clean up dates using dplyr
-mendota_interp.df <- mendota_interp.df %>%
-  filter(x %in% as.numeric(mendota.df$sampledate)) %>% # this matches the interpolated data with what is in the main dataframe to remove dates we dont have
+CLFLWD_interp_df <- CLFLWD_interp_df %>%
+  filter(x %in% as.numeric(CLFLWD_df$date)) %>% # this matches the interpolated data with what is in the main dataframe to remove dates we dont have
   mutate(date = as_date(x)) %>% # interp turned dates into integers and this converts back
   mutate(day = day(date)) %>% # create day varaible for plotting
   mutate(year = year(date)) %>% # create a four digit year column
   select(-x) %>% #remove x column
-  rename(depth=y, wtemp=z) #rename variables
+  rename(depth=y, temp=z) #rename variables
 
-# lets look at one date 2013
-mendota_2013.df <- mendota_interp.df %>%
-  filter(year==2013)
+# lets look at one date 2023
+CLFLWD_2023.df <- CLFLWD_interp_df %>%
+  filter(year==2023)
 
 # plot our interpolated data
 ggplot(mendota_2013.df, aes(x = date, y = depth, z = wtemp, fill = wtemp)) +
